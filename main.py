@@ -17,7 +17,8 @@ trade_client = Trade(api_key, api_secret, api_passphrase, False)
 
 # Configuraciones
 symbol = "BTCUSDCM"
-fixed_size = 0.00019  # ← AJUSTADO A TU BALANCE
+fixed_size = 0.00019  # Tamaño ajustado a tu balance
+leverage = 1  # Apalancamiento 1x
 
 # Función para enviar mensajes a Telegram
 def send_telegram_message(message):
@@ -34,8 +35,8 @@ def close_open_position(symbol):
             if size != 0:
                 side = "sell" if size > 0 else "buy"
                 size = abs(size)
-                trade_client.create_market_order(symbol=symbol, side=side, size=size)
-                send_telegram_message(f"⚡ Posición existente CERRADA ({side.upper()}) de {size} contratos")
+                trade_client.create_market_order(symbol=symbol, side=side, size=size, lever=leverage)
+                send_telegram_message(f"⚡ Posición existente CERRADA ({side.upper()}) de {size} BTC")
     except Exception as e:
         send_telegram_message(f"❗ Error cerrando posición: {e}")
 
@@ -52,11 +53,11 @@ def webhook():
 
     # ✅ Abrir nueva posición
     if order_type == "long":
-        trade_client.create_market_order(symbol=symbol, side="buy", size=fixed_size)
+        trade_client.create_market_order(symbol=symbol, side="buy", size=fixed_size, lever=leverage)
         send_telegram_message(f"🟢 NUEVO LONG ejecutado: {fixed_size} BTC")
 
     elif order_type == "short":
-        trade_client.create_market_order(symbol=symbol, side="sell", size=fixed_size)
+        trade_client.create_market_order(symbol=symbol, side="sell", size=fixed_size, lever=leverage)
         send_telegram_message(f"🔴 NUEVO SHORT ejecutado: {fixed_size} BTC")
 
     else:
@@ -68,6 +69,7 @@ def webhook():
 # Ejecutar el servidor
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
 
 
