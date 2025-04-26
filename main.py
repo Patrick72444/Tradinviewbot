@@ -1,21 +1,22 @@
 import os
 from flask import Flask, request
-from binance.spot import Spot
+from kucoin_futures.client import Trade
 import requests
 
 app = Flask(__name__)
 
 # Variables de entorno
-api_key = os.getenv("BINANCE_API_KEY")
-api_secret = os.getenv("BINANCE_API_SECRET")
+api_key = os.getenv("KUCOIN_API_KEY")
+api_secret = os.getenv("KUCOIN_API_SECRET")
+api_passphrase = os.getenv("KUCOIN_API_PASSPHRASE")
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
-# Cliente de Binance Spot
-client = Spot(api_key=api_key, api_secret=api_secret)
+# Cliente de KuCoin Futures
+client = Trade(key=api_key, secret=api_secret, passphrase=api_passphrase, is_sandbox=False)
 
 # Configuraciones
-symbol = "BTCUSDC"  # Cambiado a USDC
+symbol = "BTCUSDTM"  # ⚡ IMPORTANTE: Futuros KuCoin usan USDT, termina en M (perpetual)
 balance_percentage = 1.0  # 100%
 
 # Función para enviar mensajes a Telegram
@@ -32,33 +33,34 @@ def webhook():
 
     order_type = data.get("order_type")
 
-    balances = client.account()["balances"]
-    usdc_balance = next((float(b["free"]) for b in balances if b["asset"] == "USDC"), 0.0)
-    btc_balance = next((float(b["free"]) for b in balances if b["asset"] == "BTC"), 0.0)
+    # Obtener balance de USDT
+    account_overview = client.get_account_overview()
+    usdt_balance = float(account_overview["availableBalance"])
 
-    price = float(client.ticker_price(symbol=symbol)["price"])
+    # Obtener precio de mercado
+    ticker = client.get_ticker(symbol)
+    price = float(ticker["price"])
+
+    # Cálculo de tamaño de posición (size) en contratos
+    amount_to_use = usdt_balance * balance_percentage
+    size = round(amount_to_use / price, 3)  # Tamaño en BTC
 
     if order_type == "long":
-        amount_to_use = usdc_balance * balance_percentage
-        quantity = round(amount_to_use / price, 5)
-
-        if quantity == 0:
-            send_telegram_message("⚠️ No hay suficiente USDC para comprar BTC.")
+        if size <= 0:
+            send_telegram_message("⚠️ No hay suficiente USDT para abrir LONG.")
             return {"code": "no balance"}
 
-        client.new_order(symbol=symbol, side="BUY", type="MARKET", quantity=quantity)
-        mensaje = f"🟢 COMPRA ejecutada: {quantity} BTC a {price} USDC"
+        client.create_market_order(symbol, "buy", size=size)
+        mensaje = f"🟢 LONG ejecutado: {size} BTC a {price} USDT"
         send_telegram_message(mensaje)
 
     elif order_type == "short":
-        quantity = round(btc_balance, 5)
-
-        if quantity == 0:
-            send_telegram_message("⚠️ No hay BTC disponible para vender.")
+        if size <= 0:
+            send_telegram_message("⚠️ No hay suficiente USDT para abrir SHORT.")
             return {"code": "no balance"}
 
-        client.new_order(symbol=symbol, side="SELL", type="MARKET", quantity=quantity)
-        mensaje = f"🔴 VENTA ejecutada: {quantity} BTC a {price} USDC"
+        client.create_market_order(symbol, "sell", size=size)
+        mensaje = f"🔴 SHORT ejecutado: {size} BTC a {price} USDT"
         send_telegram_message(mensaje)
 
     else:
