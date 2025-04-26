@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request
 from binance.spot import Spot
 import requests
