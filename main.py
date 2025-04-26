@@ -12,11 +12,11 @@ api_passphrase = os.getenv("KUCOIN_API_PASSPHRASE")
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
-# Cliente de KuCoin
+# Cliente de KuCoin Futures
 client = Trade(api_key, api_secret, api_passphrase, False)
 
 # Configuraciones
-symbol = "BTCUSDCM"  # ✅ BTC/USDC perpetual en KuCoin Futures
+symbol = "BTCUSDCM"  # BTC/USDC Perpetual Futures en KuCoin
 balance_percentage = 1.0  # 100%
 
 # Función para enviar mensajes a Telegram
@@ -34,23 +34,23 @@ def webhook():
     order_type = data.get("order_type")
 
     # Obtener balance disponible en Futures
-    futures_account = client.get_futures_account_overview(currency='USDC')
+    futures_account = client.get_account_overview()
     usdc_balance = float(futures_account["availableBalance"])
 
     # Obtener precio actual
-    ticker = client.get_futures_mark_price(symbol)
+    ticker = client.get_mark_price(symbol)
     price = float(ticker["value"])
 
     # Cálculo del tamaño de orden
     amount_to_use = usdc_balance * balance_percentage
-    size = round(amount_to_use / price, 5)  # 5 decimales para BTC
+    size = round(amount_to_use / price, 3)
 
     if order_type == "long":
         if size <= 0:
             send_telegram_message("⚠️ No hay suficiente USDC para abrir LONG.")
             return {"code": "no balance"}
 
-        client.create_market_order(symbol=symbol, side="buy", size=size, leverage=1)
+        client.create_market_order(symbol=symbol, side="buy", size=size)
         mensaje = f"🟢 LONG ejecutado: {size} BTC a {price} USDC"
         send_telegram_message(mensaje)
 
@@ -59,7 +59,7 @@ def webhook():
             send_telegram_message("⚠️ No hay suficiente USDC para abrir SHORT.")
             return {"code": "no balance"}
 
-        client.create_market_order(symbol=symbol, side="sell", size=size, leverage=1)
+        client.create_market_order(symbol=symbol, side="sell", size=size)
         mensaje = f"🔴 SHORT ejecutado: {size} BTC a {price} USDC"
         send_telegram_message(mensaje)
 
@@ -72,4 +72,5 @@ def webhook():
 # Ejecutar el servidor
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
