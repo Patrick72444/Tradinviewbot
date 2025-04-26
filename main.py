@@ -40,7 +40,7 @@ def webhook():
 
     if order_type == "long":
         amount_to_use = usdc_balance * balance_percentage
-        quantity = round(amount_to_use / price, 6)
+        quantity = round(amount_to_use / price, 5)
 
         if quantity == 0:
             send_telegram_message("⚠️ No hay suficiente USDC para comprar BTC.")
@@ -51,7 +51,7 @@ def webhook():
         send_telegram_message(mensaje)
 
     elif order_type == "short":
-        quantity = round(btc_balance, 6)
+        quantity = round(btc_balance, 5)
 
         if quantity == 0:
             send_telegram_message("⚠️ No hay BTC disponible para vender.")
