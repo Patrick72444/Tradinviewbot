@@ -4,10 +4,10 @@ import requests
 
 app = Flask(__name__)
 
-api_key = "TU_API_KEY"
-api_secret = "TU_API_SECRET"
-bot_token = "TU_TELEGRAM_BOT_TOKEN"
-chat_id = "5086466173"
+api_key = os.getenv("BINANCE_API_KEY")
+api_secret = os.getenv("BINANCE_API_SECRET")
+bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
 client = Spot(api_key=api_key, api_secret=api_secret)
 
