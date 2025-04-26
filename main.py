@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request
-from kucoin_futures.client import Trade
+from kucoin.client import Client
 import requests
 
 app = Flask(__name__)
@@ -12,11 +12,11 @@ api_passphrase = os.getenv("KUCOIN_API_PASSPHRASE")
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
-# Cliente de KuCoin Futures
-client = Trade(key=api_key, secret=api_secret, passphrase=api_passphrase, is_sandbox=False)
+# Cliente de KuCoin
+client = Client(api_key, api_secret, api_passphrase, sandbox=False)
 
 # Configuraciones
-symbol = "BTCUSDTM"  # ⚡ IMPORTANTE: Futuros KuCoin usan USDT, termina en M (perpetual)
+symbol = "BTCUSDCM"  # ✅ BTC/USDC perpetual en KuCoin Futures
 balance_percentage = 1.0  # 100%
 
 # Función para enviar mensajes a Telegram
@@ -33,34 +33,34 @@ def webhook():
 
     order_type = data.get("order_type")
 
-    # Obtener balance de USDT
-    account_overview = client.get_account_overview()
-    usdt_balance = float(account_overview["availableBalance"])
+    # Obtener balance disponible en Futures
+    futures_account = client.get_futures_account_overview(currency='USDC')
+    usdc_balance = float(futures_account["availableBalance"])
 
-    # Obtener precio de mercado
-    ticker = client.get_ticker(symbol)
-    price = float(ticker["price"])
+    # Obtener precio actual
+    ticker = client.get_futures_mark_price(symbol)
+    price = float(ticker["value"])
 
-    # Cálculo de tamaño de posición (size) en contratos
-    amount_to_use = usdt_balance * balance_percentage
-    size = round(amount_to_use / price, 3)  # Tamaño en BTC
+    # Cálculo del tamaño de orden
+    amount_to_use = usdc_balance * balance_percentage
+    size = round(amount_to_use / price, 4)  # 4 decimales para BTC
 
     if order_type == "long":
         if size <= 0:
-            send_telegram_message("⚠️ No hay suficiente USDT para abrir LONG.")
+            send_telegram_message("⚠️ No hay suficiente USDC para abrir LONG.")
             return {"code": "no balance"}
 
-        client.create_market_order(symbol, "buy", size=size)
-        mensaje = f"🟢 LONG ejecutado: {size} BTC a {price} USDT"
+        client.create_market_order(symbol=symbol, side="buy", size=size, leverage=1)
+        mensaje = f"🟢 LONG ejecutado: {size} BTC a {price} USDC"
         send_telegram_message(mensaje)
 
     elif order_type == "short":
         if size <= 0:
-            send_telegram_message("⚠️ No hay suficiente USDT para abrir SHORT.")
+            send_telegram_message("⚠️ No hay suficiente USDC para abrir SHORT.")
             return {"code": "no balance"}
 
-        client.create_market_order(symbol, "sell", size=size)
-        mensaje = f"🔴 SHORT ejecutado: {size} BTC a {price} USDT"
+        client.create_market_order(symbol=symbol, side="sell", size=size, leverage=1)
+        mensaje = f"🔴 SHORT ejecutado: {size} BTC a {price} USDC"
         send_telegram_message(mensaje)
 
     else:
