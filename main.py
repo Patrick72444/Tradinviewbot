@@ -17,7 +17,7 @@ trade_client = Trade(api_key, api_secret, api_passphrase, False)
 
 # Configuraciones
 symbol = "BTCUSDCM"
-balance_percentage = 1.0
+fixed_size = 0.00019  # ← AJUSTADO A TU BALANCE
 
 # Función para enviar mensajes a Telegram
 def send_telegram_message(message):
@@ -47,32 +47,17 @@ def webhook():
 
     order_type = data.get("order_type")
 
-    # ✅ Obtener balance USDC correctamente
-    account_info = trade_client.get_account_overview(currency="USDC")
-    usdc_balance = float(account_info["availableBalance"])
-
-    # ✅ Obtener precio actual
-    ticker = trade_client.get_mark_price(symbol)
-    price = float(ticker["value"])
-
-    # ✅ Cerrar posición si existe
+    # ✅ Cerrar posición abierta primero
     close_open_position(symbol)
 
-    # ✅ Calcular tamaño de orden
-    amount_to_use = usdc_balance * balance_percentage
-    size = round(amount_to_use / price, 3)
-
-    if size <= 0:
-        send_telegram_message("⚠️ No hay suficiente USDC para operar.")
-        return {"code": "no balance"}
-
+    # ✅ Abrir nueva posición
     if order_type == "long":
-        trade_client.create_market_order(symbol=symbol, side="buy", size=size)
-        send_telegram_message(f"🟢 NUEVO LONG ejecutado: {size} BTC a {price} USDC")
+        trade_client.create_market_order(symbol=symbol, side="buy", size=fixed_size)
+        send_telegram_message(f"🟢 NUEVO LONG ejecutado: {fixed_size} BTC")
 
     elif order_type == "short":
-        trade_client.create_market_order(symbol=symbol, side="sell", size=size)
-        send_telegram_message(f"🔴 NUEVO SHORT ejecutado: {size} BTC a {price} USDC")
+        trade_client.create_market_order(symbol=symbol, side="sell", size=fixed_size)
+        send_telegram_message(f"🔴 NUEVO SHORT ejecutado: {fixed_size} BTC")
 
     else:
         send_telegram_message("❌ Orden no reconocida.")
