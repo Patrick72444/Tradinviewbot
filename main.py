@@ -1,6 +1,6 @@
 import os
 from flask import Flask, request
-from kucoin_futures.client import Trade, Account
+from kucoin_futures.client import Trade
 import requests
 
 app = Flask(__name__)
@@ -12,9 +12,8 @@ api_passphrase = os.getenv("KUCOIN_API_PASSPHRASE")
 bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
-# Clientes de KuCoin Futures
+# Cliente de KuCoin Futures
 trade_client = Trade(api_key, api_secret, api_passphrase, False)
-account_client = Account(api_key, api_secret, api_passphrase, False)
 
 # Configuraciones
 symbol = "BTCUSDCM"
@@ -49,8 +48,8 @@ def webhook():
     order_type = data.get("order_type")
 
     # ✅ Obtener balance USDC correctamente
-    balances = account_client.get_account_overview(currency="USDC")
-    usdc_balance = float(balances["availableBalance"])
+    account_info = trade_client.get_account_overview(currency="USDC")
+    usdc_balance = float(account_info["availableBalance"])
 
     # ✅ Obtener precio actual
     ticker = trade_client.get_mark_price(symbol)
@@ -84,6 +83,7 @@ def webhook():
 # Ejecutar el servidor
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
 
 
 
