@@ -12,7 +12,7 @@ chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
 client = Spot(api_key=api_key, api_secret=api_secret)
 
-symbol = "BTCUSDT"
+symbol = "BTCUSDC"
 balance_percentage = 1.0
 
 def send_telegram_message(message):
