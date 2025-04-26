@@ -13,7 +13,7 @@ bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
 # Cliente de KuCoin
-client = Trade(api_key=api_key, secret=api_secret, passphrase=api_passphrase, is_sandbox=False)
+client = Trade(api_key, api_secret, api_passphrase, False)
 
 # Configuraciones
 symbol = "BTCUSDCM"  # ✅ BTC/USDC perpetual en KuCoin Futures
