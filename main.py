@@ -43,7 +43,7 @@ def webhook():
 
     # Cálculo del tamaño de orden
     amount_to_use = usdc_balance * balance_percentage
-    size = round(amount_to_use / price, 4)  # 4 decimales para BTC
+    size = round(amount_to_use / price, 5)  # 5 decimales para BTC
 
     if order_type == "long":
         if size <= 0:
