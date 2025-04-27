@@ -19,7 +19,13 @@ app = Flask(__name__)
 # Función para firmar las peticiones
 def kucoin_headers(method, endpoint, body=""):
     now = int(time.time() * 1000)
-    str_to_sign = f"{now}{method}{endpoint}{body}"
+    
+    # Si es GET, ignoramos el body
+    if method.upper() == "GET":
+        str_to_sign = f"{now}{method}{endpoint}"
+    else:
+        str_to_sign = f"{now}{method}{endpoint}{body}"
+    
     signature = base64.b64encode(hmac.new(API_SECRET.encode('utf-8'), str_to_sign.encode('utf-8'), hashlib.sha256).digest())
     passphrase = base64.b64encode(hmac.new(API_SECRET.encode('utf-8'), API_PASSPHRASE.encode('utf-8'), hashlib.sha256).digest())
 
