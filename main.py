@@ -4,6 +4,7 @@ import hmac
 import hashlib
 import base64
 import requests
+import json
 from flask import Flask, request, jsonify
 
 # Cargar API KEYS desde las variables de entorno
@@ -39,9 +40,8 @@ def create_market_order(symbol, side, size):
         "side": side,
         "symbol": symbol,
         "type": "market",
-        "size": size
+        "size": size  # AHORA size significa contratos
     }
-    import json
     body = json.dumps(data)
     headers = kucoin_headers("POST", endpoint, body)
     response = requests.post(url, headers=headers, data=body)
@@ -54,7 +54,7 @@ def ping():
 @app.route('/buy', methods=['POST'])
 def buy():
     try:
-        result = create_market_order("BTCUSDCM", "buy", 0.0001)
+        result = create_market_order("BTCUSDCM", "buy", 10)  # 1 contrato
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)})
@@ -62,11 +62,12 @@ def buy():
 @app.route('/sell', methods=['POST'])
 def sell():
     try:
-        result = create_market_order("BTCUSDCM", "sell", 0.0001)
+        result = create_market_order("BTCUSDCM", "sell", 10)  # 1 contrato
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
