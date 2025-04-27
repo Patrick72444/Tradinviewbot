@@ -1,10 +1,11 @@
+import os
 from flask import Flask, request
 from kucoin.client import KucoinFutures
 
-# Tus claves API
-api_key = 'TU_API_KEY'
-api_secret = 'TU_API_SECRET'
-api_passphrase = 'TU_API_PASSPHRASE'
+# Cargar las claves de las variables de entorno
+api_key = os.getenv('API_KEY')
+api_secret = os.getenv('API_SECRET')
+api_passphrase = os.getenv('API_PASSPHRASE')
 
 # Crear la app de Flask
 app = Flask(__name__)
@@ -14,7 +15,7 @@ client = KucoinFutures(
     key=api_key,
     secret=api_secret,
     passphrase=api_passphrase,
-    is_sandbox=False  # True si usas sandbox, False si es cuenta real
+    is_sandbox=False  # True si usas sandbox, False si es real
 )
 
 # Ruta de prueba para ver si el bot está vivo
