@@ -1,61 +1,24 @@
-import os
-import time
-import hmac
-import hashlib
-import base64
-import json
-import requests
+from kucoin_futures.client import Trade
 
-# Configura aquí tus credenciales
-api_key = os.getenv("KUCOIN_API_KEY")
-api_secret = os.getenv("KUCOIN_API_SECRET")
-api_passphrase = os.getenv("KUCOIN_API_PASSPHRASE")
+# Tus claves de API (ponlas de forma segura, nunca en el código final!)
+api_key = 'TU_API_KEY'
+api_secret = 'TU_API_SECRET'
+api_passphrase = 'TU_API_PASSPHRASE'
 
-# Variables de trading
-symbol = "BTCUSDCM"  # par de futuros
-side = "buy"  # o "sell"
-size = 1  # 1 contrato
-leverage = 1
-base_url = "https://api-futures.kucoin.com"
+# Conexión al cliente de trading
+client = Trade(
+    key=api_key,
+    secret=api_secret,
+    passphrase=api_passphrase,
+    is_sandbox=False  # Pon True si usas sandbox, pero ahora parece que es real
+)
 
-# Función para firmar
-def sign_request(endpoint, method, body=""):
-    now = int(time.time() * 1000)
-    str_to_sign = f"{now}{method}{endpoint}{body}"
-    signature = base64.b64encode(
-        hmac.new(api_secret.encode('utf-8'), str_to_sign.encode('utf-8'), hashlib.sha256).digest()
-    )
-    passphrase = base64.b64encode(
-        hmac.new(api_secret.encode('utf-8'), api_passphrase.encode('utf-8'), hashlib.sha256).digest()
-    )
-    headers = {
-        "KC-API-KEY": api_key,
-        "KC-API-SIGN": signature.decode(),
-        "KC-API-TIMESTAMP": str(now),
-        "KC-API-PASSPHRASE": passphrase.decode(),
-        "KC-API-KEY-VERSION": "2",
-        "Content-Type": "application/json"
-    }
-    return headers
+# Crear una orden de mercado para abrir un long en BTC/USDT
+order = client.create_market_order(
+    symbol='BTCUSDCM',    # Ojo: en KuCoin para futuros añaden la "M" al final
+    side='buy',           # 'buy' para long, 'sell' para short
+    size=0.0001            # tamaño en BTC
+)
 
-# Función para mandar orden
-def send_order():
-    endpoint = "/api/v1/orders"
-    url = base_url + endpoint
-    order = {
-        "symbol": symbol,
-        "side": side,
-        "type": "market",
-        "size": size,
-        "leverage": leverage,
-        "reduceOnly": False
-    }
-    body = json.dumps(order)
-    headers = sign_request(endpoint, "POST", body)
-
-    response = requests.post(url, headers=headers, data=body)
-    print(response.json())
-
-if __name__ == "__main__":
-    send_order()
+print(order)
 
