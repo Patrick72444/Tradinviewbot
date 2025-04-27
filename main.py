@@ -1,24 +1,53 @@
-from kucoin_futures.client import Trade
+from flask import Flask, request
+from kucoin.client import KucoinFutures
 
-# Tus claves de API (ponlas de forma segura, nunca en el código final!)
+# Tus claves API
 api_key = 'TU_API_KEY'
 api_secret = 'TU_API_SECRET'
 api_passphrase = 'TU_API_PASSPHRASE'
 
-# Conexión al cliente de trading
-client = Trade(
+# Crear la app de Flask
+app = Flask(__name__)
+
+# Conexión al cliente de KuCoin Futures
+client = KucoinFutures(
     key=api_key,
     secret=api_secret,
     passphrase=api_passphrase,
-    is_sandbox=False  # Pon True si usas sandbox, pero ahora parece que es real
+    is_sandbox=False  # True si usas sandbox, False si es cuenta real
 )
 
-# Crear una orden de mercado para abrir un long en BTC/USDT
-order = client.create_market_order(
-    symbol='BTCUSDCM',    # Ojo: en KuCoin para futuros añaden la "M" al final
-    side='buy',           # 'buy' para long, 'sell' para short
-    size=0.0001            # tamaño en BTC
-)
+# Ruta de prueba para ver si el bot está vivo
+@app.route('/ping', methods=['GET'])
+def ping():
+    return 'Bot está vivo! 🚀'
 
-print(order)
+# Ruta para abrir una operación LONG
+@app.route('/buy', methods=['POST'])
+def buy():
+    try:
+        order = client.create_market_order(
+            symbol='BTCUSDCM',
+            side='buy',
+            size=0.0001  # Puedes ajustar el tamaño
+        )
+        return {'status': 'success', 'order': order}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
 
+# Ruta para abrir una operación SHORT
+@app.route('/sell', methods=['POST'])
+def sell():
+    try:
+        order = client.create_market_order(
+            symbol='BTCUSDCM',
+            side='sell',
+            size=0.0001  # Puedes ajustar el tamaño
+        )
+        return {'status': 'success', 'order': order}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
+
+# Ejecutar el servidor
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
