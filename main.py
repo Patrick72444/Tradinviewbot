@@ -2,9 +2,9 @@ from kucoin_futures.client import Trade
 import uuid
 
 # Configura tus claves aquí directamente
-API_KEY = 6817470bc058ba0001f9bc1e
-API_SECRET = 9e041df5-c0db-46f1-abdc-5b85a79e82ae'
-API_PASSPHRASE = 147896321
+API_KEY = "6817470bc058ba0001f9bc1e"
+API_SECRET = "9e041df5-c0db-46f1-abdc-5b85a79e82ae'"
+API_PASSPHRASE = "147896321"
 
 # Inicializa cliente en modo sandbox (testnet)
 client = Trade(key=API_KEY, secret=API_SECRET, passphrase=API_PASSPHRASE, is_sandbox=True)
