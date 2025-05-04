@@ -14,7 +14,7 @@ try:
     order = client.create_market_order(
         symbol='XBTUSDM',   # símbolo en testnet: BTC/USDT margined
         side='buy',
-        leverage=5,
+        lever=5,
         size=1,
         client_oid=str(uuid.uuid4())
     )
