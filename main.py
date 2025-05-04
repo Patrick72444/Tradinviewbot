@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import requests, json, time, uuid, hmac, base64
 from hashlib import sha256
 
-# === CONFIG ===
+# === CONFIGURACIÓN ===
 API_KEY = "TU_API_KEY"
 API_SECRET = "TU_API_SECRET"
 API_PASSPHRASE = "TU_API_PASSPHRASE"
@@ -58,39 +58,48 @@ def create_market_order(side, size, reduce_only=False):
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.json
-    action = data.get("order_type")  # "long" o "short"
-    if action not in ["long", "short"]:
-        return jsonify({"error": "invalid order_type"}), 400
-
-    side = "buy" if action == "long" else "sell"
-    opposite_side = "sell" if side == "buy" else "buy"
-
     try:
-        # 1. Obtener tamaño actual y cerrar posición si hay
+        print("📨 Webhook recibido")
+        print("Contenido crudo:", request.data)
+
+        data = request.get_json(force=True)
+        print("✅ JSON recibido:", data)
+
+        action = data.get("order_type")
+        if action not in ["long", "short"]:
+            print("❌ Acción inválida:", action)
+            return jsonify({"error": "invalid order_type"}), 400
+
+        side = "buy" if action == "long" else "sell"
+        opposite = "sell" if side == "buy" else "buy"
+
+        # 1. Cerrar posición actual si hay
         pos = get_position()
         current_qty = float(pos["currentQty"])
         if current_qty > 0:
-            print("📉 Cerrando posición actual:", pos["currentQty"])
-            create_market_order(opposite_side, current_qty, reduce_only=True)
+            print("📉 Cerrando posición previa:", current_qty)
+            create_market_order(opposite, current_qty, reduce_only=True)
 
-        # 2. Obtener balance y calcular tamaño de entrada
+        # 2. Calcular tamaño de la nueva posición
         balance = get_available_balance()
         entry_value = balance * LEVERAGE
-        # Tamaño = valor / precio actual
         price = float(pos["markPrice"])
         size = int(entry_value / price)
         if size == 0:
+            print("⚠️ Tamaño calculado demasiado pequeño")
             return jsonify({"error": "size too small"}), 400
 
-        # 3. Ejecutar nueva orden
+        # 3. Ejecutar nueva entrada
         create_market_order(side, size, reduce_only=False)
 
         return jsonify({"status": "ok", "side": side, "size": size})
+
     except Exception as e:
+        print("❌ Error en el webhook:", e)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
+    print("🚀 Bot iniciado y esperando webhooks en puerto 10000...")
     app.run(host="0.0.0.0", port=10000)
 
 
