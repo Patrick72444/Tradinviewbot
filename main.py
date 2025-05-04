@@ -31,7 +31,15 @@ def get_position():
     endpoint = f"/api/v1/position?symbol={SYMBOL}"
     headers = sign_request("GET", endpoint)
     res = requests.get(BASE_URL + endpoint, headers=headers)
-    return res.json()["data"]
+    try:
+        data = res.json()
+        if data.get("code") != "200000":
+            print("⚠️ Error en respuesta de posición:", data)
+            return None
+        return data["data"]
+    except Exception as e:
+        print("❌ Error procesando JSON de posición:", e)
+        return None
 
 def get_available_balance():
     endpoint = "/api/v1/account-overview?currency=USDC"
@@ -73,14 +81,19 @@ def webhook():
         side = "buy" if action == "long" else "sell"
         opposite = "sell" if side == "buy" else "buy"
 
-        # 1. Cerrar posición actual si hay
+        # 1. Obtener posición actual
         pos = get_position()
+        if not pos or "currentQty" not in pos or "markPrice" not in pos:
+            print("❌ No se pudo obtener posición válida:", pos)
+            return jsonify({"error": "no position data"}), 500
+
         current_qty = float(pos["currentQty"])
+
         if current_qty > 0:
             print("📉 Cerrando posición previa:", current_qty)
             create_market_order(opposite, current_qty, reduce_only=True)
 
-        # 2. Calcular tamaño de la nueva posición
+        # 2. Calcular tamaño de nueva posición
         balance = get_available_balance()
         entry_value = balance * LEVERAGE
         price = float(pos["markPrice"])
@@ -89,7 +102,7 @@ def webhook():
             print("⚠️ Tamaño calculado demasiado pequeño")
             return jsonify({"error": "size too small"}), 400
 
-        # 3. Ejecutar nueva entrada
+        # 3. Ejecutar orden nueva
         create_market_order(side, size, reduce_only=False)
 
         return jsonify({"status": "ok", "side": side, "size": size})
@@ -101,5 +114,4 @@ def webhook():
 if __name__ == "__main__":
     print("🚀 Bot iniciado y esperando webhooks en puerto 10000...")
     app.run(host="0.0.0.0", port=10000)
-
 
