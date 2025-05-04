@@ -3,9 +3,9 @@ import requests, json, time, uuid, hmac, base64
 from hashlib import sha256
 
 # === CONFIGURACIÓN ===
-API_KEY = "TU_API_KEY"
-API_SECRET = "TU_API_SECRET"
-API_PASSPHRASE = "TU_API_PASSPHRASE"
+API_KEY = "6817470bc058ba0001f9bc1e"
+API_SECRET = "9e041df5-c0db-46f1-abdc-5b85a79e82ae"
+API_PASSPHRASE = "147896321"
 BASE_URL = "https://api-futures.kucoin.com"
 SYMBOL = "XBTUSDCM"
 LEVERAGE = 5
