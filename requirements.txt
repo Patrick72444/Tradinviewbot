@@ -1,1 +1,1 @@
-kucoin-futures
+kucoin-futures-python
