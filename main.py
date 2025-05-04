@@ -7,7 +7,7 @@ API_SECRET = "9e041df5-c0db-46f1-abdc-5b85a79e82ae'"
 API_PASSPHRASE = "147896321"
 
 # Inicializa cliente en modo sandbox (testnet)
-client = Trade(key=API_KEY, secret=API_SECRET, passphrase=API_PASSPHRASE, is_sandbox=True)
+client = Trade(key=API_KEY, secret=API_SECRET, passphrase=API_PASSPHRASE)
 
 # Ejecuta orden de compra
 try:
