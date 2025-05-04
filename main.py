@@ -80,22 +80,25 @@ def webhook():
             return jsonify({"error": "no position data"}), 500
 
         current_qty = abs(float(pos["currentQty"]))
-        if current_qty > 0:
-            print(f"📉 Cerrando posición abierta de {current_qty} contratos...")
-            create_market_order(opposite, int(current_qty), reduce_only=True)
+if current_qty > 0:
+    print(f"📉 Cerrando posición abierta de {current_qty} contratos...")
 
-            # Esperar hasta que la posición se cierre
-            print("⏳ Esperando a que la posición se cierre...")
-            for i in range(10):
-                time.sleep(0.5)
-                pos_check = get_position()
-                qty_check = abs(float(pos_check["currentQty"]))
-                if qty_check == 0:
-                    print("✅ Posición cerrada correctamente")
-                    break
-            else:
-                print("❌ La posición no se cerró a tiempo")
-                return jsonify({"error": "position not closed in time"}), 500
+    # ✅ Detectar dirección correcta para cerrar
+    closing_side = "sell" if float(pos["currentQty"]) > 0 else "buy"
+    create_market_order(closing_side, int(current_qty), reduce_only=True)
+
+    # Esperar a que la posición se cierre
+    print("⏳ Esperando a que la posición se cierre...")
+    for i in range(10):
+        time.sleep(0.5)
+        pos_check = get_position()
+        qty_check = abs(float(pos_check["currentQty"]))
+        if qty_check == 0:
+            print("✅ Posición cerrada correctamente")
+            break
+    else:
+        print("❌ La posición no se cerró a tiempo")
+        return jsonify({"error": "position not closed in time"}), 500
 
         # Abrir nueva posición
         print(f"📈 Abriendo nueva posición {side.upper()} con size {SIZE}")
