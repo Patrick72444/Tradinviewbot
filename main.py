@@ -2,13 +2,13 @@ from flask import Flask, request, jsonify
 import requests, json, time, uuid, hmac, base64
 from hashlib import sha256
 
-# === CONFIG ===
-API_KEY = "6817470bc058ba0001f9bc1e"
-API_SECRET = "9e041df5-c0db-46f1-abdc-5b85a79e82ae"
-API_PASSPHRASE = "147896321"
+# === CONFIGURACIÓN ===
+API_KEY = "TU_API_KEY"
+API_SECRET = "TU_API_SECRET"
+API_PASSPHRASE = "TU_API_PASSPHRASE"
 BASE_URL = "https://api-futures.kucoin.com"
 SYMBOL = "XBTUSDCM"
-SIZE = 8  # Contratos fijos
+SIZE = 8
 
 app = Flask(__name__)
 
@@ -56,14 +56,14 @@ def create_market_order(side, size, reduce_only=False):
     body_str = json.dumps(body)
     headers = sign_request("POST", endpoint, body_str)
     res = requests.post(BASE_URL + endpoint, headers=headers, data=body_str)
-    print(f"✅ Orden {side.upper()} enviada (reduceOnly={reduce_only}). Respuesta:", res.status_code, res.text)
+    print(f"🟢 Orden {side.upper()} (reduceOnly={reduce_only}) enviada. Respuesta: {res.status_code} {res.text}")
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
         print("📨 Webhook recibido")
         data = request.get_json(force=True)
-        print("✅ JSON recibido:", data)
+        print("📩 Contenido recibido:", data)
 
         action = data.get("order_type")
         if action not in ["long", "short"]:
@@ -73,7 +73,7 @@ def webhook():
         side = "buy" if action == "long" else "sell"
         opposite = "sell" if side == "buy" else "buy"
 
-        # Verificar posición actual
+        # Verificar posición abierta
         pos = get_position()
         if not pos or "currentQty" not in pos:
             print("❌ No se pudo obtener la posición actual:", pos)
@@ -84,7 +84,20 @@ def webhook():
             print(f"📉 Cerrando posición abierta de {current_qty} contratos...")
             create_market_order(opposite, int(current_qty), reduce_only=True)
 
-        # Abrir nueva posición con tamaño fijo
+            # Esperar hasta que la posición se cierre
+            print("⏳ Esperando a que la posición se cierre...")
+            for i in range(10):
+                time.sleep(0.5)
+                pos_check = get_position()
+                qty_check = abs(float(pos_check["currentQty"]))
+                if qty_check == 0:
+                    print("✅ Posición cerrada correctamente")
+                    break
+            else:
+                print("❌ La posición no se cerró a tiempo")
+                return jsonify({"error": "position not closed in time"}), 500
+
+        # Abrir nueva posición
         print(f"📈 Abriendo nueva posición {side.upper()} con size {SIZE}")
         create_market_order(side, SIZE, reduce_only=False)
 
@@ -95,5 +108,6 @@ def webhook():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    print("🚀 Bot iniciado. Esperando señales en /webhook ...")
+    print("🚀 Bot operativo en /webhook")
     app.run(host="0.0.0.0", port=10000)
+
