@@ -1,30 +1,25 @@
-from flask import Flask, request
-import requests
-import os
+from kucoin_futures.client import Trade
+import uuid
 
-app = Flask(__name__)
+# Configura tus claves aquí directamente
+API_KEY = 'TU_API_KEY'
+API_SECRET = 'TU_API_SECRET'
+API_PASSPHRASE = 'TU_API_PASSPHRASE'
 
-# Reemplaza estos valores con los tuyos
-TELEGRAM_TOKEN = 8163150195:AAFKm-QOZ5lJn_2wvyggwhLOgbjqu2xl71o
-TELEGRAM_CHAT_ID = 5086466173
+# Inicializa cliente en modo sandbox (testnet)
+client = Trade(key=API_KEY, secret=API_SECRET, passphrase=API_PASSPHRASE, is_sandbox=True)
 
-def send_telegram_message(message):
-    url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
-    payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': message
-    }
-    requests.post(url, data=payload)
-
-@app.route('/webhook', methods=['POST'])
-def webhook():
-    data = request.json
-    if data:
-        # Puedes personalizar el mensaje aquí
-        message = f"Señal recibida: {data}"
-        send_telegram_message(message)
-    return '', 200
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Render asigna un puerto en PORT
-    app.run(host='0.0.0.0', port=port)
+# Ejecuta orden de compra
+try:
+    order = client.create_market_order(
+        symbol='XBTUSDM',   # símbolo en testnet: BTC/USDT margined
+        side='buy',
+        leverage=5,
+        size=1,
+        client_oid=str(uuid.uuid4())
+    )
+    print("✅ Orden de compra enviada correctamente:")
+    print(order)
+except Exception as e:
+    print("❌ Error al enviar la orden:")
+    print(e)
