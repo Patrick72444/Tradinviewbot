@@ -8,7 +8,7 @@ API_SECRET = "9e041df5-c0db-46f1-abdc-5b85a79e82ae"
 API_PASSPHRASE = "147896321"
 BASE_URL = "https://api-futures.kucoin.com"
 SYMBOL = "XBTUSDCM"
-SIZE = 8
+SIZE = 5
 
 app = Flask(__name__)
 
